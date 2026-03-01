@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using Rento.Application;
 using Rento.Infrastructure;
+using Rento.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,28 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Apply pending EF Core migrations at startup (creates/updates DB schema).
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex,
+            "Database migration failed. Ensure PostgreSQL is running and ConnectionStrings:DefaultConnection is correct. " +
+            "When using AppHost, start the AppHost project so Postgres starts first.");
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
@@ -19,26 +41,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/weatherforecast", () =>
-{
-    string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
 
 app.MapDefaultEndpoints();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

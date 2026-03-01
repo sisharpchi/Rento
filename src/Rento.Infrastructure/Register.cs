@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using OpenIddict.EntityFrameworkCore;
 using Rento.Core.Entities;
@@ -24,6 +25,12 @@ public static class Register
     {
         var connectionString = configuration.GetConnectionString(connectionSection)
             ?? "Host=localhost;Port=5432;Database=rento;Username=postgres;Password=postgres";
+
+        // Default connection timeout 60s (Npgsql default 15s can cause "Timeout during reading" on slow start/SSL).
+        var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        if (builder.Timeout <= 0)
+            builder.Timeout = 60;
+        connectionString = builder.ToString();
 
         services.AddDbContext<MainDbContext>(options =>
         {

@@ -55,7 +55,11 @@ public class AuthorizationController : ControllerBase
             return await ExchangeRefreshTokenAsync(request, cancellationToken);
         }
 
-        throw new NotImplementedException("The specified grant type is not implemented.");
+        return BadRequest(new OpenIddictResponse
+        {
+            Error = Errors.UnsupportedGrantType,
+            ErrorDescription = "The specified grant type is not supported."
+        });
     }
 
     [HttpPost("revoke")]

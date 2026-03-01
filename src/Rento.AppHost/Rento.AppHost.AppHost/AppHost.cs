@@ -10,4 +10,7 @@ var apiService = builder.AddProject<Projects.Rento_AppHost_ApiService>("apiservi
     .WithReference(rentoDb)
     .WaitFor(rentoDb);
 
+var telegramBot = builder.AddProject<Projects.Rento_TelegramBot>("telegrambot")
+    .WithReference(apiService);
+
 builder.Build().Run();

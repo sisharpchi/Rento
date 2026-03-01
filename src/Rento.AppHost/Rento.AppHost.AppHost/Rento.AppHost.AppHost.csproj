@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rento.AppHost.ApiService\Rento.AppHost.ApiService.csproj" />
+    <ProjectReference Include="..\Rento.TelegramBot\Rento.TelegramBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>
