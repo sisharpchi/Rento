@@ -1,3 +1,5 @@
+using Rento.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -5,16 +7,21 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
-
+app.MapControllers();
 app.MapGet("/weatherforecast", () =>
 {
+    string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
     var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
