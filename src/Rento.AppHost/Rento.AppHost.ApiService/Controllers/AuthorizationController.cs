@@ -153,6 +153,7 @@ public class AuthorizationController : ControllerBase
         identity.SetClaim(Claims.Subject, user.Id);
         identity.SetClaim(ClaimTypes.NameIdentifier, user.Id);
 
+        // offline_access scope — javobda refresh_token chiqishi uchun (Aliposter misolidek)
         var scopes = new HashSet<string>(request.GetScopes());
         scopes.Add(Scopes.OfflineAccess);
         identity.SetScopes(scopes);
@@ -192,7 +193,11 @@ public class AuthorizationController : ControllerBase
         var identity = CreatePrincipal(user, request);
         identity.SetClaim(Claims.Subject, user.Id);
         identity.SetClaim(ClaimTypes.NameIdentifier, user.Id);
-        identity.SetScopes(principal.GetScopes());
+
+        // Eski principal scope’larini saqlab, offline_access qo‘shamiz — yangi refresh_token ham chiqadi (rolling refresh)
+        var scopes = new HashSet<string>(principal.GetScopes());
+        scopes.Add(Scopes.OfflineAccess);
+        identity.SetScopes(scopes);
         identity.SetDestinations(GetDestinations);
 
         return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

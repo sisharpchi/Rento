@@ -92,8 +92,8 @@ public static class Register
             .AddServer(options =>
             {
                 options.RegisterScopes(Scopes.OfflineAccess);
-                options.SetTokenEndpointUris("connect/token")
-                    .SetRevocationEndpointUris("connect/revoke");
+                options.SetTokenEndpointUris("security/oauth/token")
+                    .SetRevocationEndpointUris("security/oauth/revoke");
 
                 options.AllowClientCredentialsFlow()
                     .AllowPasswordFlow()
@@ -105,6 +105,7 @@ public static class Register
                 options.UseAspNetCore()
                     .DisableTransportSecurityRequirement()
                     .EnableTokenEndpointPassthrough();
+                    //.EnableRevocationEndpointPassthrough();
 
                 options.SetRefreshTokenLifetime(TimeSpan.FromDays(7));
                 options.SetAccessTokenLifetime(TimeSpan.FromHours(24));
