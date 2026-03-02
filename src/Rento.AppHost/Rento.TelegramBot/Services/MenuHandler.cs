@@ -5,7 +5,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace Rento.TelegramBot.Services;
 
 /// <summary>
-/// Handles main menu and lang menu text messages: SMS kod olish, Profil, Til, Orqaga, O'zbekcha, Русский, English.
+/// Handles main menu and lang menu text messages: OTP kod olish, Profil, Til, Orqaga, O'zbekcha, Русский, English.
 /// </summary>
 public class MenuHandler
 {
@@ -25,53 +25,68 @@ public class MenuHandler
 
         var chatId = update.Message.Chat.Id;
         var telegramUserId = from.Id;
+        var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
+        var lang = profile?.Language;
 
-        if (text == BotMessages.ButtonSmsCode)
+        if (BotMessages.MatchesButton(BotMessages.KeyButtonSmsCode, text))
         {
-            await HandleSmsCodeAsync(bot, chatId, telegramUserId, null, ct);
+            await HandleSmsCodeAsync(bot, chatId, telegramUserId, lang, ct);
             return;
         }
 
-        if (text == BotMessages.ButtonProfile)
+        if (BotMessages.MatchesButton(BotMessages.KeyButtonProfile, text))
         {
-            await HandleProfileAsync(bot, chatId, telegramUserId, null, ct);
+            await HandleProfileAsync(bot, chatId, telegramUserId, lang, ct);
             return;
         }
 
-        if (text == BotMessages.ButtonLang)
+        if (BotMessages.MatchesButton(BotMessages.KeyButtonLang, text))
         {
             await SendLangMenuAsync(bot, chatId, telegramUserId, ct);
             return;
         }
 
-        if (text == BotMessages.ButtonBack)
+        if (BotMessages.MatchesButton(BotMessages.KeyButtonBack, text))
         {
             await bot.SendTextMessageAsync(
                 chatId,
-                BotMessages.Get("ChooseMenuHint", null),
-                replyMarkup: Keyboards.GetMainMenu(),
+                BotMessages.Get("ChooseMenuHint", lang),
+                replyMarkup: Keyboards.GetMainMenu(lang),
                 cancellationToken: ct);
             return;
         }
 
-        if (text == BotMessages.LangLabelUz || text == BotMessages.LangLabelRu || text == BotMessages.LangLabelEn)
+        if (BotMessages.MatchesButton(BotMessages.KeyLangLabelUz, text))
         {
-            var lang = text == BotMessages.LangLabelUz ? BotMessages.LangUz
-                : text == BotMessages.LangLabelRu ? BotMessages.LangRu
-                : BotMessages.LangEn;
-            var ok = await _apiClient.SetLanguageAsync(telegramUserId, lang, ct);
-            if (!ok)
-                _logger.LogWarning("SetLanguage failed for TelegramUserId={TelegramUserId}", telegramUserId);
-            await bot.SendTextMessageAsync(
-                chatId,
-                BotMessages.Get("LanguageSet", lang),
-                replyMarkup: Keyboards.GetMainMenu(),
-                cancellationToken: ct);
+            await SetLangAndRespondAsync(bot, chatId, telegramUserId, BotMessages.LangUz, ct);
+            return;
+        }
+        if (BotMessages.MatchesButton(BotMessages.KeyLangLabelRu, text))
+        {
+            await SetLangAndRespondAsync(bot, chatId, telegramUserId, BotMessages.LangRu, ct);
+            return;
+        }
+        if (BotMessages.MatchesButton(BotMessages.KeyLangLabelEn, text))
+        {
+            await SetLangAndRespondAsync(bot, chatId, telegramUserId, BotMessages.LangEn, ct);
+            return;
         }
     }
 
+    private async Task SetLangAndRespondAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string lang, CancellationToken ct)
+    {
+        var ok = await _apiClient.SetLanguageAsync(telegramUserId, lang, ct);
+        if (!ok)
+            _logger.LogWarning("SetLanguage failed for TelegramUserId={TelegramUserId}", telegramUserId);
+        await bot.SendTextMessageAsync(
+            chatId,
+            BotMessages.Get("LanguageSet", lang),
+            replyMarkup: Keyboards.GetMainMenu(lang),
+            cancellationToken: ct);
+    }
+
     /// <summary>
-    /// SMS kod olish: if no phone ask for phone; else send code message with "Yangi kod olish" inline. lang for i18n.
+    /// OTP kod olish: if no phone ask for phone; else send code message with "Yangi kod olish" inline. lang for i18n.
     /// </summary>
     public async Task HandleSmsCodeAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string? lang, CancellationToken ct)
     {
@@ -81,7 +96,7 @@ public class MenuHandler
             await bot.SendTextMessageAsync(
                 chatId,
                 BotMessages.Get("NoCodeYet", lang),
-                replyMarkup: Keyboards.GetRequestPhone(),
+                replyMarkup: Keyboards.GetRequestPhone(lang),
                 cancellationToken: ct);
             return;
         }
@@ -94,7 +109,7 @@ public class MenuHandler
         }
 
         var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), result.Code);
-        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.NewCodeButton, CallbackData.NewCode));
+        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.Get(BotMessages.KeyNewCodeButton, lang), CallbackData.NewCode));
         await bot.SendTextMessageAsync(chatId, codeText, replyMarkup: inline, cancellationToken: ct);
     }
 
@@ -114,7 +129,7 @@ public class MenuHandler
         var lastName = profile.LastName ?? "—";
         var phone = string.IsNullOrWhiteSpace(profile.PhoneNumber) ? BotMessages.Get("ProfileMiniAppHint", lang) : profile.PhoneNumber;
         var profileText = string.Format(BotMessages.Get("ProfileFormat", lang ?? profile.Language), firstName, lastName, profile.TelegramId, phone);
-        var closeButton = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.ProfileCloseButton, CallbackData.ProfileClose));
+        var closeButton = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.Get(BotMessages.KeyProfileCloseButton, lang), CallbackData.ProfileClose));
         await bot.SendTextMessageAsync(chatId, profileText, replyMarkup: closeButton, cancellationToken: ct);
     }
 
@@ -128,7 +143,7 @@ public class MenuHandler
         await bot.SendTextMessageAsync(
             chatId,
             BotMessages.Get("LanguageChoose", lang),
-            replyMarkup: Keyboards.GetLangMenu(),
+            replyMarkup: Keyboards.GetLangMenu(lang),
             cancellationToken: ct);
     }
 }

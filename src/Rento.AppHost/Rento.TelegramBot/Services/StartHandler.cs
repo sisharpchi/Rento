@@ -32,12 +32,12 @@ public class StartHandler
 
         if (hasPhone)
         {
-            // User already in DB with phone — update name/username, show menu without asking phone
             await _apiClient.EnsureUserAsync(from.Id, from.FirstName, from.LastName, from.Username, phoneNumber: null, ct);
+            var lang = profile?.Language;
             await bot.SendTextMessageAsync(
                 update.Message.Chat.Id,
-                BotMessages.Get("Welcome", null),
-                replyMarkup: Keyboards.GetMainMenu(),
+                BotMessages.Get("Welcome", lang),
+                replyMarkup: Keyboards.GetMainMenu(lang),
                 cancellationToken: ct);
             return;
         }
@@ -47,7 +47,7 @@ public class StartHandler
         if (!ok)
             _logger.LogWarning("EnsureUser failed for TelegramUserId={TelegramUserId}", from.Id);
 
-        var requestPhoneKeyboard = Keyboards.GetRequestPhone();
+        var requestPhoneKeyboard = Keyboards.GetRequestPhone(null);
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
             BotMessages.Get("AskPhone", null),
@@ -79,16 +79,19 @@ public class StartHandler
         if (!ok)
             _logger.LogWarning("EnsureUser(phone) failed for TelegramUserId={TelegramUserId}", from.Id);
 
+        var profileAfter = await _apiClient.GetProfileAsync(from.Id, ct);
+        var lang = profileAfter?.Language;
+
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
-            BotMessages.Get("PhoneSaved", null),
+            BotMessages.Get("PhoneSaved", lang),
             replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: ct);
 
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
-            BotMessages.Get("Welcome", null),
-            replyMarkup: Keyboards.GetMainMenu(),
+            BotMessages.Get("Welcome", lang),
+            replyMarkup: Keyboards.GetMainMenu(lang),
             cancellationToken: ct);
     }
 

@@ -44,26 +44,27 @@ public class CallbackQueryHandler
 
     private async Task HandleNewCodeAsync(ITelegramBotClient bot, long chatId, int messageId, long telegramUserId, string callbackQueryId, CancellationToken ct)
     {
+        var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
+        var lang = profile?.Language;
+
         var result = await _apiClient.GetCodeForBotAsync(telegramUserId, ct);
 
         if (result == null)
         {
             await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
-            await bot.SendTextMessageAsync(chatId, BotMessages.Get("ServiceError", null), cancellationToken: ct);
+            await bot.SendTextMessageAsync(chatId, BotMessages.Get("ServiceError", lang), cancellationToken: ct);
             return;
         }
 
         if (!result.Regenerated)
         {
-            await bot.AnswerCallbackQueryAsync(callbackQueryId, BotMessages.Get("OldCodeStillValid", null), showAlert: true, cancellationToken: ct);
+            await bot.AnswerCallbackQueryAsync(callbackQueryId, BotMessages.Get("OldCodeStillValid", lang), showAlert: true, cancellationToken: ct);
             return;
         }
 
         await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
-        var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
-        var lang = profile?.Language;
         var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), result.Code);
-        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.NewCodeButton, CallbackData.NewCode));
+        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.Get(BotMessages.KeyNewCodeButton, lang), CallbackData.NewCode));
         await bot.EditMessageTextAsync(
             chatId,
             messageId,

@@ -110,12 +110,6 @@ public sealed class TelegramBotWorker : BackgroundService
     {
         var text = message.Text?.Trim();
         if (string.IsNullOrEmpty(text)) return false;
-        return text == Services.BotMessages.ButtonSmsCode
-            || text == Services.BotMessages.ButtonProfile
-            || text == Services.BotMessages.ButtonLang
-            || text == Services.BotMessages.ButtonBack
-            || text == Services.BotMessages.LangLabelUz
-            || text == Services.BotMessages.LangLabelRu
-            || text == Services.BotMessages.LangLabelEn;
+        return Services.BotMessages.GetAllMenuButtonTexts().Contains(text);
     }
 }

@@ -10,34 +10,45 @@ public static class BotMessages
     public const string LangRu = "ru";
     public const string LangEn = "en";
 
-    // Menu button labels (used in Reply keyboard; must match exactly for routing)
-    public const string ButtonSmsCode = "SMS kod olish";
-    public const string ButtonProfile = "Profil";
-    public const string ButtonLang = "Til";
-    public const string ButtonBack = "Orqaga";
-    public const string LangLabelUz = "O'zbekcha";
-    public const string LangLabelRu = "Русский";
-    public const string LangLabelEn = "English";
+    /// <summary>Keys for menu/reply buttons (use Get(key, lang) for label).</summary>
+    public const string KeyButtonSmsCode = "ButtonSmsCode";
+    public const string KeyButtonProfile = "ButtonProfile";
+    public const string KeyButtonLang = "ButtonLang";
+    public const string KeyButtonBack = "ButtonBack";
+    public const string KeyLangLabelUz = "LangLabelUz";
+    public const string KeyLangLabelRu = "LangLabelRu";
+    public const string KeyLangLabelEn = "LangLabelEn";
+    public const string KeyNewCodeButton = "NewCodeButton";
+    public const string KeySendPhoneButton = "SendPhoneButton";
+    public const string KeyProfileCloseButton = "ProfileCloseButton";
 
-    public const string NewCodeButton = "Yangi kod olish";
-    public const string ProfileCloseButton = "✕";
+    private static readonly string[] MenuButtonKeys = [KeyButtonSmsCode, KeyButtonProfile, KeyButtonLang, KeyButtonBack, KeyLangLabelUz, KeyLangLabelRu, KeyLangLabelEn];
 
     private static readonly Dictionary<string, Dictionary<string, string>> Messages = new()
     {
         ["Welcome"] = new() { [LangUz] = "Xush kelibsiz!", [LangRu] = "Добро пожаловать!", [LangEn] = "Welcome!" },
         ["AskPhone"] = new() { [LangUz] = "Telefon raqamingizni yuboring (kontakt yoki +998901234567 formatida):", [LangRu] = "Отправьте номер телефона (контакт или +998901234567):", [LangEn] = "Send your phone number (contact or +998901234567):" },
-        ["SendPhoneButton"] = new() { [LangUz] = "Raqamni yuborish", [LangRu] = "Отправить номер", [LangEn] = "Send number" },
+        [KeySendPhoneButton] = new() { [LangUz] = "Raqamni yuborish", [LangRu] = "Отправить номер", [LangEn] = "Send number" },
         ["PhoneSaved"] = new() { [LangUz] = "Rahmat, raqam saqlandi.", [LangRu] = "Спасибо, номер сохранён.", [LangEn] = "Thank you, number saved." },
         ["TelegramUserIdNotFound"] = new() { [LangUz] = "Telegram user id topilmadi.", [LangRu] = "ID пользователя Telegram не найден.", [LangEn] = "Telegram user id not found." },
         ["NoCodeYet"] = new() { [LangUz] = "Siz uchun hozircha kod yo'q. Avval telefon raqamingizni kiriting (Profil yoki /start).", [LangRu] = "Код пока не создан. Сначала укажите номер телефона.", [LangEn] = "No code yet. Please enter your phone number first (Profile or /start)." },
         ["ServiceError"] = new() { [LangUz] = "Xizmat vaqtincha ishlamayapti. Keyinroq urinib ko'ring.", [LangRu] = "Сервис временно недоступен. Попробуйте позже.", [LangEn] = "Service temporarily unavailable. Please try again later." },
         ["CodeSentFormat"] = new() { [LangUz] = "Sizning parolingiz: {0}\n\nBu parolni Mini App'da kirish uchun ishlating. Hech kimga bermang.", [LangRu] = "Ваш пароль: {0}\n\nИспользуйте его для входа в Mini App. Никому не передавайте.", [LangEn] = "Your code: {0}\n\nUse it to sign in to the Mini App. Do not share with anyone." },
         ["ProfileFormat"] = new() { [LangUz] = "Profil:\nIsm: {0}\nFamiliya: {1}\nTelegram ID: {2}\nTelefon: {3}", [LangRu] = "Профиль:\nИмя: {0}\nФамилия: {1}\nTelegram ID: {2}\nТелефон: {3}", [LangEn] = "Profile:\nFirst name: {0}\nLast name: {1}\nTelegram ID: {2}\nPhone: {3}" },
-        ["ProfileMiniAppHint"] = new() { [LangUz] = "Telefon raqamini to'ldiring (SMS kod olish yoki /start).", [LangRu] = "Укажите номер телефона (SMS код или /start).", [LangEn] = "Add phone number (SMS code or /start)." },
+        ["ProfileMiniAppHint"] = new() { [LangUz] = "Telefon raqamini to'ldiring (OTP kod olish yoki /start).", [LangRu] = "Укажите номер телефона (OTP код или /start).", [LangEn] = "Add phone number (OTP code or /start)." },
         ["LanguageChoose"] = new() { [LangUz] = "Tilni tanlang:", [LangRu] = "Выберите язык:", [LangEn] = "Choose language:" },
         ["LanguageSet"] = new() { [LangUz] = "Til o'zgartirildi.", [LangRu] = "Язык изменён.", [LangEn] = "Language changed." },
         ["OldCodeStillValid"] = new() { [LangUz] = "Eski kod hali amalda. 2 daqiqadan keyin yangi kod olish mumkin.", [LangRu] = "Старый код ещё действителен. Новый код можно получить через 2 минуты.", [LangEn] = "Current code is still valid. You can get a new code in 2 minutes." },
         ["ChooseMenuHint"] = new() { [LangUz] = "Quyidagi tugmalardan birini tanlang.", [LangRu] = "Выберите одну из кнопок ниже.", [LangEn] = "Choose one of the buttons below." },
+        [KeyButtonSmsCode] = new() { [LangUz] = "OTP kod olish", [LangRu] = "OTP код", [LangEn] = "Get OTP code" },
+        [KeyButtonProfile] = new() { [LangUz] = "Profil", [LangRu] = "Профиль", [LangEn] = "Profile" },
+        [KeyButtonLang] = new() { [LangUz] = "Til", [LangRu] = "Язык", [LangEn] = "Language" },
+        [KeyButtonBack] = new() { [LangUz] = "Orqaga", [LangRu] = "Назад", [LangEn] = "Back" },
+        [KeyLangLabelUz] = new() { [LangUz] = "O'zbekcha", [LangRu] = "O'zbekcha", [LangEn] = "O'zbekcha" },
+        [KeyLangLabelRu] = new() { [LangUz] = "Русский", [LangRu] = "Русский", [LangEn] = "Русский" },
+        [KeyLangLabelEn] = new() { [LangUz] = "English", [LangRu] = "English", [LangEn] = "English" },
+        [KeyNewCodeButton] = new() { [LangUz] = "Yangi kod olish", [LangRu] = "Получить новый код", [LangEn] = "Get new code" },
+        [KeyProfileCloseButton] = new() { [LangUz] = "✕", [LangRu] = "✕", [LangEn] = "✕" },
     };
 
     /// <summary>
@@ -53,10 +64,34 @@ public static class BotMessages
         return key;
     }
 
+    /// <summary>
+    /// Returns true if text equals the button label in any language (for routing).
+    /// </summary>
+    public static bool MatchesButton(string buttonKey, string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return false;
+        return Get(buttonKey, LangUz) == text || Get(buttonKey, LangRu) == text || Get(buttonKey, LangEn) == text;
+    }
+
+    /// <summary>
+    /// All possible menu button texts in any language (for IsMenuMessage).
+    /// </summary>
+    public static HashSet<string> GetAllMenuButtonTexts()
+    {
+        var set = new HashSet<string>();
+        foreach (var key in MenuButtonKeys)
+        {
+            set.Add(Get(key, LangUz));
+            set.Add(Get(key, LangRu));
+            set.Add(Get(key, LangEn));
+        }
+        return set;
+    }
+
     // Convenience: default uz
     public static string Welcome => Get("Welcome", LangUz);
     public static string AskPhone => Get("AskPhone", LangUz);
-    public static string SendPhoneButton => Get("SendPhoneButton", LangUz);
+    public static string SendPhoneButton => Get(KeySendPhoneButton, LangUz);
     public static string PhoneSaved => Get("PhoneSaved", LangUz);
     public static string TelegramUserIdNotFound => Get("TelegramUserIdNotFound", LangUz);
     public static string NoCodeYet => Get("NoCodeYet", LangUz);
