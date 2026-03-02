@@ -52,7 +52,8 @@ public class RentoApiClient : IRentoApiClient
         DateTimeOffset? expiresAtUtc = null;
         if (json.TryGetProperty("expiresAtUtc", out var expProp) && expProp.TryGetDateTimeOffset(out var dt))
             expiresAtUtc = dt;
-        return new TelegramCodeResult(code, expiresAtUtc);
+        var regenerated = json.TryGetProperty("regenerated", out var regProp) && regProp.GetBoolean();
+        return new TelegramCodeResult(code, expiresAtUtc, regenerated);
     }
 
     public async Task<TelegramProfileDto?> GetProfileAsync(long telegramUserId, CancellationToken ct = default)

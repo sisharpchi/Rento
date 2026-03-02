@@ -16,4 +16,4 @@ public record TelegramProfileDto(string? FirstName, string? LastName, string? Ph
 /// <summary>
 /// Code response from API (matches TelegramBotCodeResponse).
 /// </summary>
-public record TelegramCodeResult(string Code, DateTimeOffset? ExpiresAtUtc);
+public record TelegramCodeResult(string Code, DateTimeOffset? ExpiresAtUtc, bool Regenerated);

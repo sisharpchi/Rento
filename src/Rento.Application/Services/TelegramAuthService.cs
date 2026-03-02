@@ -87,11 +87,11 @@ public class TelegramAuthService : ITelegramAuthService
             user.CodeExpiresAtUtc = now.AddMinutes(CodeValidMinutes);
             await _mainRepository.UnitOfWork.CommitAsync(ct);
             return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
-                new TelegramBotCodeResponse(code, user.CodeExpiresAtUtc));
+                new TelegramBotCodeResponse(code, user.CodeExpiresAtUtc, Regenerated: true));
         }
 
         return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
-            new TelegramBotCodeResponse(user.Code, user.CodeExpiresAtUtc));
+            new TelegramBotCodeResponse(user.Code, user.CodeExpiresAtUtc, Regenerated: false));
     }
 
     public async Task<ResponseResult> EnsureTelegramUserAsync(TelegramUserInfoRequest request, CancellationToken ct = default)

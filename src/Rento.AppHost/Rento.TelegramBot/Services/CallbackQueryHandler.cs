@@ -53,10 +53,7 @@ public class CallbackQueryHandler
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var stillValid = result.ExpiresAtUtc.HasValue && result.ExpiresAtUtc.Value > now;
-
-        if (stillValid)
+        if (!result.Regenerated)
         {
             await bot.AnswerCallbackQueryAsync(callbackQueryId, BotMessages.Get("OldCodeStillValid", null), showAlert: true, cancellationToken: ct);
             return;
