@@ -16,7 +16,7 @@ public interface ITelegramAuthService
     /// <summary>
     /// Mini App login: find user by phone, generate 2-minute code and save.
     /// </summary>
-    Task<ResponseResult<TelegramRequestCodeResponse>> RequestCodeAsync(TelegramRequestCodeRequest request, CancellationToken ct = default);
+    Task<ResponseResult> GenerateCodeAsync(TelegramGenerateCodeRequest request, CancellationToken ct = default);
 
     /// <summary>
     /// Bot: get code by Telegram user id; create and save new code if missing or expired.

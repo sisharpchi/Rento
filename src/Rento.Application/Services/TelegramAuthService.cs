@@ -44,26 +44,23 @@ public class TelegramAuthService : ITelegramAuthService
         return ResponseResult.CreateSuccess();
     }
 
-    public async Task<ResponseResult<TelegramRequestCodeResponse>> RequestCodeAsync(TelegramRequestCodeRequest request, CancellationToken ct = default)
+    public async Task<ResponseResult> GenerateCodeAsync(TelegramGenerateCodeRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.PhoneNumber))
-            return ResponseResult<TelegramRequestCodeResponse>.CreateError("Phone number is required.", ErrorCodes.InvalidPhone);
+            return ResponseResult.CreateError("Phone number is required.", ErrorCodes.InvalidPhone);
 
         var user = await _mainRepository.Set<User>()
             .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, ct);
 
         if (user is null)
-            return ResponseResult<TelegramRequestCodeResponse>.CreateError("User with this phone number not found.", ErrorCodes.UserNotFound);
+            return ResponseResult.CreateError("User with this phone number not found.", ErrorCodes.UserNotFound);
 
         var code = Generate4DigitCode();
         user.Code = code;
         user.CodeExpiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(CodeValidMinutes);
         await _mainRepository.UnitOfWork.CommitAsync(ct);
 
-        return ResponseResult<TelegramRequestCodeResponse>.CreateSuccess(
-            new TelegramRequestCodeResponse(
-                true,
-                "Code generated. Open the Telegram bot and press /start to receive your code."));
+        return ResponseResult.CreateSuccess();
     }
 
     public async Task<ResponseResult<TelegramBotCodeResponse>> GetCodeForBotAsync(long telegramUserId, CancellationToken ct = default)

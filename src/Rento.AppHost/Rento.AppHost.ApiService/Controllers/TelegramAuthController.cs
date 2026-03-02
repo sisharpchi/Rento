@@ -32,13 +32,13 @@ public class TelegramAuthController : ControllerBase
     }
 
     /// <summary>
-    /// Mini App: request code for login (phone only). Code is valid 2 minutes. User must exist and be linked via bot/Mini App.
+    /// Mini App: generate code for login (phone only). Code is valid 2 minutes. User must exist and be linked via bot/Mini App.
     /// </summary>
-    [HttpPost("request-code")]
+    [HttpPost("generate-code")]
     [Produces("application/json")]
-    public async Task<IActionResult> RequestCode([FromBody] TelegramRequestCodeRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GenerateCode([FromBody] TelegramGenerateCodeRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _telegramAuthService.RequestCodeAsync(request, cancellationToken);
+        var result = await _telegramAuthService.GenerateCodeAsync(request, cancellationToken);
         if (result.Success)
             return Ok(result);
         if (result.ErrorCode == 40401) // UserNotFound
