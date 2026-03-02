@@ -56,6 +56,11 @@ public sealed class TelegramBotWorker : BackgroundService
                     var startHandler = scope.ServiceProvider.GetRequiredService<Services.StartHandler>();
                     await startHandler.HandlePhoneMessageAsync(botClient, update, cancellationToken);
                 }
+                else if (IsMenuMessage(message))
+                {
+                    var menuHandler = scope.ServiceProvider.GetRequiredService<Services.MenuHandler>();
+                    await menuHandler.HandleAsync(botClient, update, cancellationToken);
+                }
                 return;
             }
 
@@ -99,5 +104,18 @@ public sealed class TelegramBotWorker : BackgroundService
         if (string.IsNullOrWhiteSpace(message.Text)) return false;
         var digits = message.Text.Count(c => c == '+' || char.IsDigit(c));
         return digits >= 9;
+    }
+
+    private static bool IsMenuMessage(Message message)
+    {
+        var text = message.Text?.Trim();
+        if (string.IsNullOrEmpty(text)) return false;
+        return text == Services.BotMessages.ButtonSmsCode
+            || text == Services.BotMessages.ButtonProfile
+            || text == Services.BotMessages.ButtonLang
+            || text == Services.BotMessages.ButtonBack
+            || text == Services.BotMessages.LangLabelUz
+            || text == Services.BotMessages.LangLabelRu
+            || text == Services.BotMessages.LangLabelEn;
     }
 }

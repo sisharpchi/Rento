@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Rento.Application;
+using Rento.AppHost.ApiService.Extensions;
 using Rento.Infrastructure;
 using Rento.Infrastructure.Data;
 
@@ -13,6 +14,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddControllers();
+builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
@@ -37,6 +39,7 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 app.UseRouting();
+app.UseSwaggerUi();
 app.UseAuthentication();
 app.UseAuthorization();
 

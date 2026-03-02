@@ -67,13 +67,13 @@ public class TelegramAuthService : ITelegramAuthService
                 "Code generated. Open the Telegram bot and press /start to receive your code."));
     }
 
-    public async Task<ResponseResult<string>> GetCodeForBotAsync(long telegramUserId, CancellationToken ct = default)
+    public async Task<ResponseResult<TelegramBotCodeResponse>> GetCodeForBotAsync(long telegramUserId, CancellationToken ct = default)
     {
         var user = await _mainRepository.Set<User>()
             .FirstOrDefaultAsync(u => u.TelegramId == telegramUserId, ct);
 
         if (user is null)
-            return ResponseResult<string>.CreateError(
+            return ResponseResult<TelegramBotCodeResponse>.CreateError(
                 "No user linked to this Telegram account. Ask the user to register from the Mini App first.",
                 ErrorCodes.NoCodeForTelegramUser);
 
@@ -86,10 +86,12 @@ public class TelegramAuthService : ITelegramAuthService
             user.Code = code;
             user.CodeExpiresAtUtc = now.AddMinutes(CodeValidMinutes);
             await _mainRepository.UnitOfWork.CommitAsync(ct);
-            return ResponseResult<string>.CreateSuccess(code);
+            return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
+                new TelegramBotCodeResponse(code, user.CodeExpiresAtUtc));
         }
 
-        return ResponseResult<string>.CreateSuccess(user.Code);
+        return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
+            new TelegramBotCodeResponse(user.Code, user.CodeExpiresAtUtc));
     }
 
     public async Task<ResponseResult> EnsureTelegramUserAsync(TelegramUserInfoRequest request, CancellationToken ct = default)
@@ -132,7 +134,27 @@ public class TelegramAuthService : ITelegramAuthService
             return ResponseResult<TelegramProfileResponse>.CreateError("User not found.", ErrorCodes.UserNotFound);
 
         return ResponseResult<TelegramProfileResponse>.CreateSuccess(
-            new TelegramProfileResponse(user.FirstName, user.LastName, user.PhoneNumber, user.TelegramId ?? 0));
+            new TelegramProfileResponse(user.FirstName, user.LastName, user.PhoneNumber, user.TelegramId ?? 0, user.Language));
+    }
+
+    public async Task<ResponseResult> SetLanguageAsync(long telegramUserId, string language, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+            return ResponseResult.CreateError("Language is required.", ErrorCodes.InvalidRequest);
+
+        var normalized = language.Trim().ToLowerInvariant();
+        if (normalized is not ("uz" or "ru" or "en"))
+            return ResponseResult.CreateError("Language must be uz, ru, or en.", ErrorCodes.InvalidRequest);
+
+        var user = await _mainRepository.Set<User>()
+            .FirstOrDefaultAsync(u => u.TelegramId == telegramUserId, ct);
+
+        if (user is null)
+            return ResponseResult.CreateError("User not found.", ErrorCodes.UserNotFound);
+
+        user.Language = normalized;
+        await _mainRepository.UnitOfWork.CommitAsync(ct);
+        return ResponseResult.CreateSuccess();
     }
 
     private static string Generate4DigitCode() =>

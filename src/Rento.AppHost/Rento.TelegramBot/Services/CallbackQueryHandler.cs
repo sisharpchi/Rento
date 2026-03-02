@@ -1,10 +1,12 @@
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Rento.TelegramBot.Services;
 
+/// <summary>
+/// Handles inline button callbacks: NewCode (Yangi kod olish), ProfileClose (X).
+/// </summary>
 public class CallbackQueryHandler
 {
     private readonly IRentoApiClient _apiClient;
@@ -22,67 +24,60 @@ public class CallbackQueryHandler
             return;
 
         var chatId = update.CallbackQuery.Message?.Chat.Id;
-        if (chatId is null)
+        var messageId = update.CallbackQuery.Message?.MessageId;
+        if (chatId is null || messageId is null)
             return;
 
         try
         {
-            if (data == CallbackData.Code)
-                await HandleCodeAsync(bot, chatId.Value, telegramUserId, update.CallbackQuery.Id, ct);
-            else if (data == CallbackData.Profile)
-                await HandleProfileAsync(bot, chatId.Value, telegramUserId, update.CallbackQuery.Id, ct);
-            else if (data.StartsWith("lang"))
-                await HandleLanguageAsync(bot, chatId.Value, data, update.CallbackQuery.Id, ct);
+            if (data == CallbackData.NewCode)
+                await HandleNewCodeAsync(bot, chatId.Value, messageId.Value, telegramUserId, update.CallbackQuery.Id, ct);
+            else if (data == CallbackData.ProfileClose)
+                await HandleProfileCloseAsync(bot, chatId.Value, messageId.Value, update.CallbackQuery.Id, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Callback handling failed. Data={Data}", data);
-            await bot.AnswerCallbackQueryAsync(update.CallbackQuery.Id, BotMessages.ServiceError, cancellationToken: ct);
+            await bot.AnswerCallbackQueryAsync(update.CallbackQuery.Id, BotMessages.Get("ServiceError", null), showAlert: true, cancellationToken: ct);
         }
     }
 
-    private async Task HandleCodeAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string callbackQueryId, CancellationToken ct)
+    private async Task HandleNewCodeAsync(ITelegramBotClient bot, long chatId, int messageId, long telegramUserId, string callbackQueryId, CancellationToken ct)
     {
-        var code = await _apiClient.GetCodeForBotAsync(telegramUserId, ct);
-        await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
+        var result = await _apiClient.GetCodeForBotAsync(telegramUserId, ct);
 
-        if (string.IsNullOrEmpty(code))
+        if (result == null)
         {
-            await bot.SendTextMessageAsync(chatId, BotMessages.NoCodeYet, cancellationToken: ct);
+            await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
+            await bot.SendTextMessageAsync(chatId, BotMessages.Get("ServiceError", null), cancellationToken: ct);
             return;
         }
 
-        await bot.SendTextMessageAsync(chatId, string.Format(BotMessages.CodeSentFormat, code), cancellationToken: ct);
-    }
+        var now = DateTimeOffset.UtcNow;
+        var stillValid = result.ExpiresAtUtc.HasValue && result.ExpiresAtUtc.Value > now;
 
-    private async Task HandleProfileAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string callbackQueryId, CancellationToken ct)
-    {
+        if (stillValid)
+        {
+            await bot.AnswerCallbackQueryAsync(callbackQueryId, BotMessages.Get("OldCodeStillValid", null), showAlert: true, cancellationToken: ct);
+            return;
+        }
+
         await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
         var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
-        var firstName = profile?.FirstName ?? "—";
-        var lastName = profile?.LastName ?? "—";
-        var phone = string.IsNullOrEmpty(profile?.PhoneNumber) ? BotMessages.ProfileMiniAppHint : profile.PhoneNumber;
-        var telegramIdStr = profile?.TelegramId.ToString() ?? "—";
-        var profileText = string.Format(BotMessages.ProfileFormat, firstName, lastName, telegramIdStr, phone);
-        await bot.SendTextMessageAsync(chatId, profileText, cancellationToken: ct);
+        var lang = profile?.Language;
+        var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), result.Code);
+        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.NewCodeButton, CallbackData.NewCode));
+        await bot.EditMessageTextAsync(
+            chatId,
+            messageId,
+            codeText,
+            replyMarkup: inline,
+            cancellationToken: ct);
     }
 
-    private async Task HandleLanguageAsync(ITelegramBotClient bot, long chatId, string data, string callbackQueryId, CancellationToken ct)
+    private async Task HandleProfileCloseAsync(ITelegramBotClient bot, long chatId, int messageId, string callbackQueryId, CancellationToken ct)
     {
         await bot.AnswerCallbackQueryAsync(callbackQueryId, cancellationToken: ct);
-
-        if (data == CallbackData.Lang)
-        {
-            var keyboard = new InlineKeyboardMarkup(new[]
-            {
-                InlineKeyboardButton.WithCallbackData("O'zbekcha", CallbackData.LangUz),
-                InlineKeyboardButton.WithCallbackData("Русский", CallbackData.LangRu),
-                InlineKeyboardButton.WithCallbackData("English", CallbackData.LangEn)
-            });
-            await bot.SendTextMessageAsync(chatId, BotMessages.LanguageChoose, replyMarkup: keyboard, cancellationToken: ct);
-            return;
-        }
-
-        await bot.SendTextMessageAsync(chatId, BotMessages.LanguageSet, cancellationToken: ct);
+        await bot.DeleteMessageAsync(chatId, messageId, ct);
     }
 }

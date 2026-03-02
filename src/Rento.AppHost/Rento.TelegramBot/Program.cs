@@ -28,6 +28,7 @@ builder.Services.AddHttpClient("RentoApi", (sp, client) =>
 });
 builder.Services.AddScoped<IRentoApiClient, RentoApiClient>();
 builder.Services.AddScoped<StartHandler>();
+builder.Services.AddScoped<MenuHandler>();
 builder.Services.AddScoped<CallbackQueryHandler>();
 builder.Services.AddHostedService<TelegramBotWorker>();
 

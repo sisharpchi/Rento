@@ -17,7 +17,7 @@ public class StartHandler
     }
 
     /// <summary>
-    /// /start: ensure user (without phone), then ask for phone.
+    /// /start: if user with TelegramUserId already exists in DB (with phone), show menu; else ask for phone.
     /// </summary>
     public async Task HandleAsync(ITelegramBotClient bot, Update update, CancellationToken ct)
     {
@@ -27,25 +27,36 @@ public class StartHandler
             return;
         }
 
+        var profile = await _apiClient.GetProfileAsync(from.Id, ct);
+        var hasPhone = !string.IsNullOrWhiteSpace(profile?.PhoneNumber);
+
+        if (hasPhone)
+        {
+            // User already in DB with phone — update name/username, show menu without asking phone
+            await _apiClient.EnsureUserAsync(from.Id, from.FirstName, from.LastName, from.Username, phoneNumber: null, ct);
+            await bot.SendTextMessageAsync(
+                update.Message.Chat.Id,
+                BotMessages.Get("Welcome", null),
+                replyMarkup: Keyboards.GetMainMenu(),
+                cancellationToken: ct);
+            return;
+        }
+
+        // New or no phone — ensure user record, then ask for phone
         var ok = await _apiClient.EnsureUserAsync(from.Id, from.FirstName, from.LastName, from.Username, phoneNumber: null, ct);
         if (!ok)
             _logger.LogWarning("EnsureUser failed for TelegramUserId={TelegramUserId}", from.Id);
 
-        var requestPhoneKeyboard = new ReplyKeyboardMarkup(KeyboardButton.WithRequestContact(BotMessages.SendPhoneButton))
-        {
-            OneTimeKeyboard = true,
-            ResizeKeyboard = true
-        };
-
+        var requestPhoneKeyboard = Keyboards.GetRequestPhone();
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
-            BotMessages.AskPhone,
+            BotMessages.Get("AskPhone", null),
             replyMarkup: requestPhoneKeyboard,
             cancellationToken: ct);
     }
 
     /// <summary>
-    /// User sent contact or text as phone: save phone and show main menu.
+    /// User sent contact or text as phone: save phone, then "Xush kelibsiz" + main menu (Reply keyboard).
     /// </summary>
     public async Task HandlePhoneMessageAsync(ITelegramBotClient bot, Update update, CancellationToken ct)
     {
@@ -60,7 +71,7 @@ public class StartHandler
 
         if (string.IsNullOrWhiteSpace(phone) || phone.Length < 9)
         {
-            await bot.SendTextMessageAsync(update.Message.Chat.Id, BotMessages.AskPhone, cancellationToken: ct);
+            await bot.SendTextMessageAsync(update.Message.Chat.Id, BotMessages.Get("AskPhone", null), cancellationToken: ct);
             return;
         }
 
@@ -68,24 +79,16 @@ public class StartHandler
         if (!ok)
             _logger.LogWarning("EnsureUser(phone) failed for TelegramUserId={TelegramUserId}", from.Id);
 
-        // Remove reply keyboard
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
-            BotMessages.PhoneSaved,
+            BotMessages.Get("PhoneSaved", null),
             replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: ct);
 
-        var keyboard = new InlineKeyboardMarkup(new[]
-        {
-            InlineKeyboardButton.WithCallbackData(BotMessages.ButtonCode, CallbackData.Code),
-            InlineKeyboardButton.WithCallbackData(BotMessages.ButtonProfile, CallbackData.Profile),
-            InlineKeyboardButton.WithCallbackData(BotMessages.ButtonLanguage, CallbackData.Lang)
-        });
-
         await bot.SendTextMessageAsync(
             update.Message.Chat.Id,
-            BotMessages.Welcome,
-            replyMarkup: keyboard,
+            BotMessages.Get("Welcome", null),
+            replyMarkup: Keyboards.GetMainMenu(),
             cancellationToken: ct);
     }
 

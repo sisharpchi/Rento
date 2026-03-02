@@ -21,7 +21,7 @@ public interface ITelegramAuthService
     /// <summary>
     /// Bot: get code by Telegram user id; create and save new code if missing or expired.
     /// </summary>
-    Task<ResponseResult<string>> GetCodeForBotAsync(long telegramUserId, CancellationToken ct = default);
+    Task<ResponseResult<TelegramBotCodeResponse>> GetCodeForBotAsync(long telegramUserId, CancellationToken ct = default);
 
     /// <summary>
     /// Bot /start: ensure user exists and update FirstName, LastName, UserName from Telegram.
@@ -32,4 +32,9 @@ public interface ITelegramAuthService
     /// Bot: get profile by Telegram user id (for profile button).
     /// </summary>
     Task<ResponseResult<TelegramProfileResponse>> GetProfileByTelegramIdAsync(long telegramUserId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Bot: set user language (uz, ru, en).
+    /// </summary>
+    Task<ResponseResult> SetLanguageAsync(long telegramUserId, string language, CancellationToken ct = default);
 }

@@ -16,5 +16,9 @@ public class User : IdentityUser, IEntity<string>
     /// Telegram user id — Mini App dan keladi, Bot /start da shu orqali kod yuboradi.
     /// </summary>
     public long? TelegramId { get; set; }
+    /// <summary>
+    /// Bot til tanlash: uz, ru, en.
+    /// </summary>
+    public string? Language { get; set; }
     public string FullName => LastName + " " + FirstName;
 }

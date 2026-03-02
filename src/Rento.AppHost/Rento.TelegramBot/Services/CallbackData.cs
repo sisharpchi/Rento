@@ -11,4 +11,6 @@ public static class CallbackData
     public const string LangUz = "lang_uz";
     public const string LangRu = "lang_ru";
     public const string LangEn = "lang_en";
+    public const string NewCode = "new_code";
+    public const string ProfileClose = "profile_close";
 }

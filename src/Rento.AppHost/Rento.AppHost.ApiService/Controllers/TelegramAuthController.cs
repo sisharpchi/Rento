@@ -59,8 +59,27 @@ public class TelegramAuthController : ControllerBase
 
         var result = await _telegramAuthService.GetCodeForBotAsync(body.TelegramUserId, cancellationToken);
         if (result.Success)
-            return Ok(new TelegramBotCodeResponse(result.Value!));
+            return Ok(result.Value!);
         if (result.ErrorCode == 40402) // NoCodeForTelegramUser
+            return NotFound(result);
+        return BadRequest(result);
+    }
+
+    /// <summary>
+    /// Bot: set user language (uz, ru, en). Requires X-Bot-Secret header.
+    /// </summary>
+    [HttpPost("set-language")]
+    [Produces("application/json")]
+    public async Task<IActionResult> SetLanguage([FromBody] TelegramSetLanguageRequest request, [FromHeader(Name = "X-Bot-Secret")] string? botSecret, CancellationToken cancellationToken = default)
+    {
+        var expectedSecret = _configuration["TelegramBot:SecretKey"];
+        if (string.IsNullOrEmpty(expectedSecret) || botSecret != expectedSecret)
+            return Unauthorized();
+
+        var result = await _telegramAuthService.SetLanguageAsync(request.TelegramUserId, request.Language, cancellationToken);
+        if (result.Success)
+            return Ok(result);
+        if (result.ErrorCode == 40401)
             return NotFound(result);
         return BadRequest(result);
     }
