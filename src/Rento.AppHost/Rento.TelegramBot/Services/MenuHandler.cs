@@ -5,7 +5,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 namespace Rento.TelegramBot.Services;
 
 /// <summary>
-/// Handles main menu and lang menu text messages: OTP kod olish, Profil, Til, Orqaga, O'zbekcha, Русский, English.
+/// Handles main menu and lang menu text messages: Kodni ko'rish, Profil, Til, Orqaga, O'zbekcha, Русский, English.
 /// </summary>
 public class MenuHandler
 {
@@ -28,9 +28,9 @@ public class MenuHandler
         var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
         var lang = profile?.Language;
 
-        if (BotMessages.MatchesButton(BotMessages.KeyButtonSmsCode, text))
+        if (BotMessages.MatchesButton(BotMessages.KeyButtonViewCode, text))
         {
-            await HandleSmsCodeAsync(bot, chatId, telegramUserId, lang, ct);
+            await HandleViewCodeAsync(bot, chatId, telegramUserId, lang, ct);
             return;
         }
 
@@ -86,31 +86,18 @@ public class MenuHandler
     }
 
     /// <summary>
-    /// OTP kod olish: if no phone ask for phone; else send code message with "Yangi kod olish" inline. lang for i18n.
+    /// Kodni ko'rish: show current code if any (no generation); else GetCodeFromMiniApp message. No inline "Yangi kod olish".
     /// </summary>
-    public async Task HandleSmsCodeAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string? lang, CancellationToken ct)
+    public async Task HandleViewCodeAsync(ITelegramBotClient bot, long chatId, long telegramUserId, string? lang, CancellationToken ct)
     {
-        var profile = await _apiClient.GetProfileAsync(telegramUserId, ct);
-        if (profile == null || string.IsNullOrWhiteSpace(profile.PhoneNumber))
-        {
-            await bot.SendTextMessageAsync(
-                chatId,
-                BotMessages.Get("NoCodeYet", lang),
-                replyMarkup: Keyboards.GetRequestPhone(lang),
-                cancellationToken: ct);
-            return;
-        }
-
         var result = await _apiClient.GetCodeForBotAsync(telegramUserId, ct);
-        if (result == null)
+        if (result != null)
         {
-            await bot.SendTextMessageAsync(chatId, BotMessages.Get("ServiceError", lang), cancellationToken: ct);
+            var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), result.Code);
+            await bot.SendTextMessageAsync(chatId, codeText, cancellationToken: ct);
             return;
         }
-
-        var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), result.Code);
-        var inline = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(BotMessages.Get(BotMessages.KeyNewCodeButton, lang), CallbackData.NewCode));
-        await bot.SendTextMessageAsync(chatId, codeText, replyMarkup: inline, cancellationToken: ct);
+        await bot.SendTextMessageAsync(chatId, BotMessages.Get("GetCodeFromMiniApp", lang), cancellationToken: ct);
     }
 
     /// <summary>

@@ -8,13 +8,13 @@ namespace Rento.TelegramBot.Services;
 public static class Keyboards
 {
     /// <summary>
-    /// Main menu: OTP kod / Profil / Til (one row). lang = user Language (uz/ru/en).
+    /// Main menu: Kodni ko'rish / Profil / Til (one row). lang = user Language (uz/ru/en).
     /// </summary>
     public static ReplyKeyboardMarkup GetMainMenu(string? lang = null)
     {
         return new ReplyKeyboardMarkup(new[]
         {
-            new KeyboardButton[] { BotMessages.Get(BotMessages.KeyButtonSmsCode, lang), BotMessages.Get(BotMessages.KeyButtonProfile, lang), BotMessages.Get(BotMessages.KeyButtonLang, lang) }
+            new KeyboardButton[] { BotMessages.Get(BotMessages.KeyButtonViewCode, lang), BotMessages.Get(BotMessages.KeyButtonProfile, lang), BotMessages.Get(BotMessages.KeyButtonLang, lang) }
         })
         {
             ResizeKeyboard = true

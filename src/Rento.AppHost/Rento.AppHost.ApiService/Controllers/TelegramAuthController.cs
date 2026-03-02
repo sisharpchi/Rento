@@ -32,7 +32,7 @@ public class TelegramAuthController : ControllerBase
     }
 
     /// <summary>
-    /// Mini App: request code for login (phone + telegram user id). Code is valid 2 minutes.
+    /// Mini App: request code for login (phone only). Code is valid 2 minutes. User must exist and be linked via bot/Mini App.
     /// </summary>
     [HttpPost("request-code")]
     [Produces("application/json")]

@@ -58,7 +58,6 @@ public class TelegramAuthService : ITelegramAuthService
         var code = Generate4DigitCode();
         user.Code = code;
         user.CodeExpiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(CodeValidMinutes);
-        user.TelegramId = request.TelegramUserId;
         await _mainRepository.UnitOfWork.CommitAsync(ct);
 
         return ResponseResult<TelegramRequestCodeResponse>.CreateSuccess(
@@ -79,16 +78,10 @@ public class TelegramAuthService : ITelegramAuthService
 
         var now = DateTimeOffset.UtcNow;
         var codeExpired = user.CodeExpiresAtUtc is null || user.CodeExpiresAtUtc < now;
-
         if (codeExpired || string.IsNullOrEmpty(user.Code))
-        {
-            var code = Generate4DigitCode();
-            user.Code = code;
-            user.CodeExpiresAtUtc = now.AddMinutes(CodeValidMinutes);
-            await _mainRepository.UnitOfWork.CommitAsync(ct);
-            return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
-                new TelegramBotCodeResponse(code, user.CodeExpiresAtUtc, Regenerated: true));
-        }
+            return ResponseResult<TelegramBotCodeResponse>.CreateError(
+                "No valid code. Get a code from the Mini App first.",
+                ErrorCodes.NoCodeForTelegramUser);
 
         return ResponseResult<TelegramBotCodeResponse>.CreateSuccess(
             new TelegramBotCodeResponse(user.Code, user.CodeExpiresAtUtc, Regenerated: false));

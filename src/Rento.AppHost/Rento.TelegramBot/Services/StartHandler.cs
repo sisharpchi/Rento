@@ -34,6 +34,12 @@ public class StartHandler
         {
             await _apiClient.EnsureUserAsync(from.Id, from.FirstName, from.LastName, from.Username, phoneNumber: null, ct);
             var lang = profile?.Language;
+            var codeResult = await _apiClient.GetCodeForBotAsync(from.Id, ct);
+            if (codeResult != null)
+            {
+                var codeText = string.Format(BotMessages.Get("CodeSentFormat", lang), codeResult.Code);
+                await bot.SendTextMessageAsync(update.Message.Chat.Id, codeText, cancellationToken: ct);
+            }
             await bot.SendTextMessageAsync(
                 update.Message.Chat.Id,
                 BotMessages.Get("Welcome", lang),
